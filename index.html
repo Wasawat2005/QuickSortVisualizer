@@ -13,7 +13,7 @@
     .container {
         max-width: 900px;
         margin: 40px auto;
-        background: #ffffff;
+        background: #fff;
         border-radius: 12px;
         box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         padding: 30px;
@@ -71,7 +71,7 @@
     </div>
 
     <div class="box">
-        <b>Current Step</b>
+        <b>Current Step / Sorted Array</b>
         <div class="array" id="current"></div>
     </div>
 
@@ -86,7 +86,6 @@
     </div>
 
     <div class="step-indicator" id="step"></div>
-    <div id="sortedArray" class="sorted"></div>
 </div>
 
 <script>
@@ -105,26 +104,29 @@ function start() {
 
     document.getElementById("history").innerHTML = "";
     document.getElementById("explain").innerHTML = "";
-    document.getElementById("sortedArray").innerHTML = "";
+    document.getElementById("current").innerHTML = "";
+    document.getElementById("step").innerText = "";
 
     quickSort(arr);
     show();
 }
 
 function nextStep() {
-    if (index < steps.length - 1) {
+    if (index < steps.length) {
         moveCurrentToHistory();
-        index++;
         show();
-    } else if (index === steps.length - 1) {
-        moveCurrentToHistory();
-        document.getElementById("current").innerHTML = "";
+        index++;
+    } else if (index === steps.length) {
+        // Sorting complete
+        document.getElementById("current").innerHTML = `<b>Sorted Array:</b> ${finalSorted.join(" ")}`;
         document.getElementById("step").innerText = `Sorting Complete!`;
-        document.getElementById("sortedArray").innerText = `Sorted Array: ${finalSorted.join(" ")}`;
+        index++; // ป้องกันกดซ้ำ
     }
 }
 
 function show() {
+    if (index >= steps.length) return;
+
     const s = steps[index];
     if (s.left.length + s.right.length === 0) {
         document.getElementById("current").innerHTML = "";
@@ -141,11 +143,11 @@ function show() {
 }
 
 function moveCurrentToHistory() {
+    const s = steps[index];
+    if (!s) return; // ป้องกัน error
     const history = document.getElementById("history");
     const div = document.createElement("div");
     div.className = "history-item";
-
-    const s = steps[index];
     div.innerHTML = formatArray(s.left, s.pivot, s.right);
     history.appendChild(div);
 }
