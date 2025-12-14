@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Quick Sort Visualizer by Group 4</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
     body {
         font-family: "Segoe UI", Arial, sans-serif;
@@ -30,21 +30,21 @@
         border-radius: 8px; border: 1px solid #ccc;
     }
     button {
-        font-size: 16px; padding: 10px 16px; border-radius: 8px; border: none;
+        font-size: 16px; padding: 10px 20px; border-radius: 8px; border: none;
         cursor: pointer; background: #3498db; color: #fff;
     }
-    button.secondary { background: #2ecc71; }
+    button.reset { background: #e74c3c; }
 
     .box {
         margin-top: 20px; padding: 15px; border-radius: 10px;
         background: #f9fafc; border-left: 5px solid #3498db;
     }
-    .array { font-size: 20px; margin-top: 10px; word-wrap: break-word; }
+    .array { font-size: 20px; margin-top: 10px; }
     .pivot { color: #e74c3c; font-weight: bold; }
 
     .history-item {
         margin-top: 8px; padding-left: 10px; border-left: 3px solid #bbb;
-        font-size: 15px; color: #333; word-wrap: break-word;
+        font-size: 15px; color: #333;
     }
 
     #explain p {
@@ -53,36 +53,32 @@
         border-left: 3px solid #3498db;
         font-size: 15px;
         color: #333;
-        word-wrap: break-word;
     }
 
     .step-indicator { text-align: center; margin-top: 15px; color: #555; }
-    .sorted { font-weight: bold; color: #2ecc71; margin-top: 15px; text-align: center; font-size: 18px; word-wrap: break-word; }
 
-    @media screen and (max-width: 600px) {
+    @media (max-width: 600px) {
         .container { margin: 20px 10px; padding: 20px; }
         input { width: 100%; }
-        button { width: 48%; margin-bottom: 8px; }
+        button { width: 100%; }
         .array { font-size: 16px; }
-        .step-indicator { font-size: 14px; }
-        .subtitle { font-size: 14px; }
     }
 </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Quick Sort – Step by Step by Group 4</h1>
-    <div class="subtitle">Current step shows pivot clearly, previous steps and explanations are preserved</div>
+    <h1>Quick Sort – Step by Step</h1>
+    <div class="subtitle">by Group 4</div>
 
     <div class="controls">
         <input id="input" placeholder="e.g. 23 2 14 65 76 88" />
-        <button onclick="start()">Start</button>
-        <button class="secondary" onclick="nextStep()">Next Step</button>
+        <button id="mainBtn" onclick="mainButton()">Start</button>
+        <button class="reset" onclick="resetAll()">Reset</button>
     </div>
 
     <div class="box">
-        <b>Current Step / Sorted Array</b>
+        <b>Current Step / Result</b>
         <div class="array" id="current"></div>
     </div>
 
@@ -92,7 +88,7 @@
     </div>
 
     <div class="box">
-        <b>Explanation (History)</b>
+        <b>Explanation</b>
         <div id="explain"></div>
     </div>
 
@@ -103,6 +99,30 @@
 let steps = [];
 let index = 0;
 let finalSorted = [];
+let started = false;
+let finished = false;
+
+function mainButton() {
+    if (finished) return; // ถ้าจบแล้ว กดต่อไม่ได้
+
+    if (!started) {
+        start();
+        if (steps.length > 0) {
+            showStep(0);
+            index = 1;
+            started = true;
+            document.getElementById("mainBtn").innerText = "Next Step";
+        }
+    } else {
+        if (index < steps.length) {
+            moveToHistory(index - 1);
+            showStep(index);
+            index++;
+        } else {
+            finish();
+        }
+    }
+}
 
 function start() {
     const input = document.getElementById("input").value.trim();
@@ -118,49 +138,50 @@ function start() {
     document.getElementById("current").innerHTML = "";
     document.getElementById("step").innerText = "";
 
-    quickSort(arr);
-    show();
+    finalSorted = quickSort(arr);
 }
 
-function nextStep() {
-    if (index < steps.length) {
-        moveCurrentToHistory();
-        show();
-        index++;
-    } else if (index === steps.length) {
-        // Sorting complete
-        document.getElementById("current").innerHTML = `<b>Sorted Array:</b> ${finalSorted.join(" ")}`;
-        document.getElementById("step").innerText = `Sorting Complete!`;
-        index++; // ป้องกันกดซ้ำ
-    }
-}
+function showStep(i) {
+    const s = steps[i];
+    document.getElementById("current").innerHTML = formatArray(s.left, s.pivot, s.right);
 
-function show() {
-    if (index >= steps.length) return;
-
-    const s = steps[index];
-    if (s.left.length + s.right.length === 0) {
-        document.getElementById("current").innerHTML = "";
-    } else {
-        document.getElementById("current").innerHTML = formatArray(s.left, s.pivot, s.right);
-    }
-
-    const explainBox = document.getElementById("explain");
     const p = document.createElement("p");
-    p.innerText = `Step ${index + 1}: Choose pivot = ${s.pivot}. Elements smaller than ${s.pivot} go to the left, elements greater than or equal to ${s.pivot} go to the right.`;
-    explainBox.appendChild(p);
+    p.innerText = `Step ${i + 1}: Choose pivot = ${s.pivot}. Smaller values go left, larger or equal go right.`;
+    document.getElementById("explain").appendChild(p);
 
-    document.getElementById("step").innerText = `Step ${index + 1} of ${steps.length}`;
+    document.getElementById("step").innerText = `Step ${i + 1} of ${steps.length}`;
 }
 
-function moveCurrentToHistory() {
-    const s = steps[index];
-    if (!s) return; // ป้องกัน error
-    const history = document.getElementById("history");
+function moveToHistory(i) {
+    const s = steps[i];
+    if (!s) return;
     const div = document.createElement("div");
     div.className = "history-item";
     div.innerHTML = formatArray(s.left, s.pivot, s.right);
-    history.appendChild(div);
+    document.getElementById("history").appendChild(div);
+}
+
+function finish() {
+    moveToHistory(index - 1);
+    document.getElementById("current").innerHTML = `<b>Sorted Array:</b> ${finalSorted.join(" ")}`;
+    document.getElementById("step").innerText = "Sorting Complete!";
+    finished = true;
+}
+
+function resetAll() {
+    document.getElementById("input").value = "";
+    document.getElementById("current").innerHTML = "";
+    document.getElementById("history").innerHTML = "";
+    document.getElementById("explain").innerHTML = "";
+    document.getElementById("step").innerText = "";
+
+    steps = [];
+    index = 0;
+    finalSorted = [];
+    started = false;
+    finished = false;
+
+    document.getElementById("mainBtn").innerText = "Start";
 }
 
 function formatArray(left, pivot, right) {
@@ -180,17 +201,11 @@ function quickSort(arr) {
             else right.push(a[i]);
         }
 
-        if (a.length > 1) {
-            steps.push({ left: left.slice(), pivot, right: right.slice() });
-        }
+        steps.push({ left: [...left], pivot, right: [...right] });
 
-        const sortedLeft = left.length > 0 ? sort(left) : [];
-        const sortedRight = right.length > 0 ? sort(right) : [];
-
-        return [...sortedLeft, pivot, ...sortedRight];
+        return [...sort(left), pivot, ...sort(right)];
     }
-
-    finalSorted = sort(arr);
+    return sort(arr);
 }
 </script>
 
