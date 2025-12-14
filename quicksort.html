@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Quick Sort Visualizer</title>
+<style>
+    body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: #f4f6f9;
+        margin: 0;
+        padding: 0;
+    }
+    .container {
+        max-width: 900px;
+        margin: 40px auto;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        padding: 30px;
+    }
+    h1 { text-align: center; color: #2c3e50; }
+    .subtitle { text-align: center; color: #666; margin-bottom: 30px; }
+
+    .controls {
+        display: flex; gap: 10px; justify-content: center; margin-bottom: 25px; flex-wrap: wrap;
+    }
+    input {
+        font-size: 16px; padding: 10px; width: 300px;
+        border-radius: 8px; border: 1px solid #ccc;
+    }
+    button {
+        font-size: 16px; padding: 10px 16px; border-radius: 8px; border: none;
+        cursor: pointer; background: #3498db; color: #fff;
+    }
+    button.secondary { background: #2ecc71; }
+
+    .box {
+        margin-top: 20px; padding: 15px; border-radius: 10px;
+        background: #f9fafc; border-left: 5px solid #3498db;
+    }
+    .array { font-size: 20px; margin-top: 10px; }
+    .pivot { color: #e74c3c; font-weight: bold; }
+
+    .history-item {
+        margin-top: 8px; padding-left: 10px; border-left: 3px solid #bbb;
+        font-size: 15px; color: #333;
+    }
+
+    #explain p {
+        margin: 6px 0;
+        padding-left: 10px;
+        border-left: 3px solid #3498db;
+        font-size: 15px;
+        color: #333;
+    }
+
+    .step-indicator { text-align: center; margin-top: 15px; color: #555; }
+    .sorted { font-weight: bold; color: #2ecc71; margin-top: 15px; text-align: center; font-size: 18px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Quick Sort – Step by Step</h1>
+    <div class="subtitle">Current step shows pivot clearly, previous steps and explanations are preserved</div>
+
+    <div class="controls">
+        <input id="input" placeholder="e.g. 23 2 14 65 76 88" />
+        <button onclick="start()">Start</button>
+        <button class="secondary" onclick="nextStep()">Next Step</button>
+    </div>
+
+    <div class="box">
+        <b>Current Step</b>
+        <div class="array" id="current"></div>
+    </div>
+
+    <div class="box">
+        <b>Previous Steps</b>
+        <div id="history"></div>
+    </div>
+
+    <div class="box">
+        <b>Explanation (History)</b>
+        <div id="explain"></div>
+    </div>
+
+    <div class="step-indicator" id="step"></div>
+    <div id="sortedArray" class="sorted"></div>
+</div>
+
+<script>
+let steps = [];
+let index = 0;
+let finalSorted = [];
+
+function start() {
+    const input = document.getElementById("input").value.trim();
+    if (!input) return;
+
+    const arr = input.split(/\s+/).map(Number);
+    steps = [];
+    index = 0;
+    finalSorted = [];
+
+    document.getElementById("history").innerHTML = "";
+    document.getElementById("explain").innerHTML = "";
+    document.getElementById("sortedArray").innerHTML = "";
+
+    quickSort(arr);
+    show();
+}
+
+function nextStep() {
+    if (index < steps.length - 1) {
+        moveCurrentToHistory();
+        index++;
+        show();
+    } else if (index === steps.length - 1) {
+        moveCurrentToHistory();
+        document.getElementById("current").innerHTML = "";
+        document.getElementById("step").innerText = `Sorting Complete!`;
+        document.getElementById("sortedArray").innerText = `Sorted Array: ${finalSorted.join(" ")}`;
+    }
+}
+
+function show() {
+    const s = steps[index];
+    if (s.left.length + s.right.length === 0) {
+        document.getElementById("current").innerHTML = "";
+    } else {
+        document.getElementById("current").innerHTML = formatArray(s.left, s.pivot, s.right);
+    }
+
+    const explainBox = document.getElementById("explain");
+    const p = document.createElement("p");
+    p.innerText = `Step ${index + 1}: Choose pivot = ${s.pivot}. Elements smaller than ${s.pivot} go to the left, elements greater than or equal to ${s.pivot} go to the right.`;
+    explainBox.appendChild(p);
+
+    document.getElementById("step").innerText = `Step ${index + 1} of ${steps.length}`;
+}
+
+function moveCurrentToHistory() {
+    const history = document.getElementById("history");
+    const div = document.createElement("div");
+    div.className = "history-item";
+
+    const s = steps[index];
+    div.innerHTML = formatArray(s.left, s.pivot, s.right);
+    history.appendChild(div);
+}
+
+function formatArray(left, pivot, right) {
+    return `${left.join(" ")} | <span class='pivot'>${pivot}</span> | ${right.join(" ")}`;
+}
+
+function quickSort(arr) {
+    function sort(a) {
+        if (a.length <= 1) return a;
+
+        const pivot = a[0];
+        const left = [];
+        const right = [];
+
+        for (let i = 1; i < a.length; i++) {
+            if (a[i] < pivot) left.push(a[i]);
+            else right.push(a[i]);
+        }
+
+        if (a.length > 1) {
+            steps.push({ left: left.slice(), pivot, right: right.slice() });
+        }
+
+        const sortedLeft = left.length > 0 ? sort(left) : [];
+        const sortedRight = right.length > 0 ? sort(right) : [];
+
+        return [...sortedLeft, pivot, ...sortedRight];
+    }
+
+    finalSorted = sort(arr);
+}
+</script>
+
+</body>
+</html>
